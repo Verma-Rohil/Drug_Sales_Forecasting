@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import joblib
+import plotly.graph_objects as go
 from pmdarima.arima import ARIMA
 
-# Set Streamlit page config
+# Page configuration
 st.set_page_config(page_title="ARIMA Forecasting UI", layout="centered")
 
 # Title
@@ -17,43 +17,57 @@ def load_model():
 
 model = load_model()
 
-# Forecast input
+# Sidebar input
 st.sidebar.header("📅 Forecast Settings")
 n_periods = st.sidebar.slider("Select number of periods to forecast:", 1, 60, 12)
 
-# Optional: Load training data if needed for plotting
-@st.cache_data
-def load_data():
-    # This is just a dummy line — replace with your actual training data
-    # e.g., pd.read_csv("drug_sales.csv", parse_dates=True, index_col="Month")
-    return pd.read_csv("dataset.txt", index_col=0, parse_dates=True)
+# Upload dataset
+st.sidebar.header("📂 Upload Time Series CSV/TXT")
+uploaded_file = st.sidebar.file_uploader("Upload your time series file (with date index)", type=['csv', 'txt'])
 
-try:
-    data = load_data()
+if uploaded_file:
+    try:
+        # Load uploaded data
+        data = pd.read_csv(uploaded_file, index_col=0, parse_dates=True)
 
-    # Forecast
-    forecast, confint = model.predict(n_periods=n_periods, return_conf_int=True)
-    last_index = data.index[-1]
-    forecast_index = pd.date_range(start=last_index + pd.offsets.MonthBegin(1), periods=n_periods, freq='MS')
+        # Ensure the index is datetime
+        if not pd.api.types.is_datetime64_any_dtype(data.index):
+            data.index = pd.to_datetime(data.index)
 
-    forecast_series = pd.Series(forecast, index=forecast_index)
-    lower_series = pd.Series(confint[:, 0], index=forecast_index)
-    upper_series = pd.Series(confint[:, 1], index=forecast_index)
+        # Forecast
+        forecast, confint = model.predict(n_periods=n_periods, return_conf_int=True)
+        last_index = data.index[-1]
+        forecast_index = pd.date_range(start=last_index + pd.offsets.MonthBegin(1), periods=n_periods, freq='MS')
 
-    # Plotting
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(data, label="Historical", color='blue')
-    ax.plot(forecast_series, label="Forecast", color='darkgreen')
-    ax.fill_between(forecast_index, lower_series, upper_series, color='gray', alpha=0.3)
-    ax.set_title("ARIMA Forecast")
-    ax.legend()
+        forecast_series = pd.Series(forecast, index=forecast_index)
+        lower_series = pd.Series(confint[:, 0], index=forecast_index)
+        upper_series = pd.Series(confint[:, 1], index=forecast_index)
 
-    # Show plot
-    st.pyplot(fig)
+        # Plot with Plotly
+        fig = go.Figure()
 
-    # Show forecasted values
-    st.subheader("Forecasted Values")
-    st.dataframe(forecast_series.rename("Forecast"))
+        fig.add_trace(go.Scatter(x=data.index, y=data.iloc[:, 0], mode='lines', name='Historical', line=dict(color='blue')))
+        fig.add_trace(go.Scatter(x=forecast_index, y=forecast_series, mode='lines', name='Forecast', line=dict(color='green')))
+        fig.add_trace(go.Scatter(x=forecast_index, y=upper_series, mode='lines', name='Upper Bound', line=dict(width=0), showlegend=False))
+        fig.add_trace(go.Scatter(x=forecast_index, y=lower_series, mode='lines', name='Lower Bound', fill='tonexty',
+                                 fillcolor='rgba(128,128,128,0.2)', line=dict(width=0), showlegend=False))
 
-except Exception as e:
-    st.error(f"⚠️ Error loading data or forecasting: {e}")
+        fig.update_layout(
+            title="Forecast with ARIMA Model",
+            xaxis_title="Date",
+            yaxis_title="Value",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            template="plotly_white"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Show forecasted values
+        st.subheader("📊 Forecasted Values")
+        st.dataframe(forecast_series.rename("Forecast"))
+
+    except Exception as e:
+        st.error(f"⚠️ Failed to load or forecast: {e}")
+
+else:
+    st.info("📄 Please upload a dataset with a datetime index column.")
