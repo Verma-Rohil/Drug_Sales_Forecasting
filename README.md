@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Time Series Forecasting using ARIMA and SARIMA
 
 This repo is for time series analysis using ARIMA and SARIMA models
@@ -7,3 +8,6 @@ Open source dataset used for the models testing
 - Use Pycharm with Python 3.x 
 - There are main.ipynb file which contain all the code 
 - dataset.txt named file used for data
+=======
+# Drug_Sales_Forecasting
+>>>>>>> ea141641e9b2baacf97bed5b706827ccf691b61c
