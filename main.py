@@ -26,7 +26,7 @@ n_periods = st.sidebar.slider("Select number of periods to forecast:", 1, 60, 12
 def load_data():
     # This is just a dummy line — replace with your actual training data
     # e.g., pd.read_csv("drug_sales.csv", parse_dates=True, index_col="Month")
-    return pd.read_csv("your_data.csv", index_col=0, parse_dates=True)
+    return pd.read_csv("dataset.txt", index_col=0, parse_dates=True)
 
 try:
     data = load_data()
