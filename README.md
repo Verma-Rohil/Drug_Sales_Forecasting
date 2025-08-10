@@ -71,11 +71,6 @@ Upload your dataset, select how many months you want to forecast, and visualize 
 2. Connect your repo to [Streamlit Cloud](https://streamlit.io/cloud)  
 3. Add your `GOOGLE_API_KEY` (or other required keys) in **Secrets** via `Settings → Secrets`  
 
-### 🔹 GCP / Cloud Run (Advanced)
-
-- Use the provided `Dockerfile` and GitHub Actions for CI/CD  
-- Automatically deploy to GCP from GitHub  
-- Need help setting this up? Just ask!
 
 ---
 
